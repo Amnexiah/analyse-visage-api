@@ -38,8 +38,8 @@ def estimate_age(opening_ratio, brow_dist):
 
 def detect_tensions(eye_opening, mouth_angle):
     return {
-        "paupiere_basse": eye_opening < 0.22,
-        "commissure_tendue": mouth_angle < 155
+        "paupiere_basse": bool(eye_opening < 0.22),
+        "commissure_tendue": bool(mouth_angle < 155)
     }
 
 def estimate_ethnicity(nose_ratio, mouth_ratio, cheek_ratio, eye_spacing_ratio):
