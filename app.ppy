@@ -1,0 +1,39 @@
+import streamlit as st
+from analyse_insightface import analyse_image_insightface
+import base64
+from PIL import Image
+from io import BytesIO
+import json
+
+st.set_page_config(page_title="Analyse Visage Biométrique", layout="wide")
+st.title("🧠 Analyse Morphologique du Visage (InsightFace)")
+
+uploaded_file = st.file_uploader("📤 Upload une image de visage", type=["jpg", "jpeg", "png"])
+
+if uploaded_file is not None:
+    image_bytes = uploaded_file.read()
+
+    with st.spinner("Analyse en cours..."):
+        result = analyse_image_insightface(image_bytes)
+
+    if "error" in result:
+        st.error(result["error"])
+    else:
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.subheader("🖼️ Image Annotée")
+            img_data = base64.b64decode(result["image_annotee_base64"])
+            st.image(Image.open(BytesIO(img_data)), use_column_width=True)
+
+        with col2:
+            st.subheader("📊 Mesures Biométriques")
+            st.json(result["mesures_biometriques"])
+
+            st.subheader("🧠 Analyses Secondaires")
+            st.json(result["analyses_secondaires"])
+
+            st.subheader("⚙️ Vecteur Debug")
+            st.json(result["vecteur_debug"])
+
+        st.success("✅ Analyse terminée")
