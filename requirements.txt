@@ -1,6 +1,8 @@
 fastapi
 uvicorn
+insightface
 opencv-python
-mediapipe
 numpy
-python-multipart
+matplotlib
+streamlit
+Pillow
