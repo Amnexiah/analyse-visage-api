@@ -8,3 +8,4 @@ streamlit
 Pillow
 onnxruntime
 python-multipart
+mediapipe
