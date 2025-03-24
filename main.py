@@ -2,13 +2,14 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from analyse_insightface import analyse_image_insightface
 from analyse_mediapipe import analyse_image_mediapipe
+from analyse_dlib import analyse_image_dlib
 import cv2
 import numpy as np
 import base64
 
 app = FastAPI(
     title="API Analyse Faciale Biométrique",
-    description="Analyse morphologique détaillée du visage via InsightFace ou MediaPipe.",
+    description="Analyse morphologique détaillée du visage via InsightFace, MediaPipe ou Dlib.",
     version="1.0"
 )
 
@@ -45,27 +46,41 @@ async def analyse_mediapipe(file: UploadFile = File(...)):
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+@app.post("/analyse-dlib")
+async def analyse_dlib(file: UploadFile = File(...)):
+    try:
+        image_bytes = await file.read()
+        result = analyse_image_dlib(image_bytes)
+        return JSONResponse(content=result)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 @app.post("/analyse-combinee")
 async def analyse_combinee(file: UploadFile = File(...)):
     try:
         image_bytes = await file.read()
         insight_result = analyse_image_insightface(image_bytes)
         mediapipe_result = analyse_image_mediapipe(image_bytes)
+        dlib_result = analyse_image_dlib(image_bytes)
 
         if "error" in insight_result:
             return JSONResponse(content={"error": "InsightFace: " + insight_result["error"]}, status_code=400)
         if "error" in mediapipe_result:
             return JSONResponse(content={"error": "MediaPipe: " + mediapipe_result["error"]}, status_code=400)
+        if "error" in dlib_result:
+            return JSONResponse(content={"error": "Dlib: " + dlib_result["error"]}, status_code=400)
 
         img1 = image_base64_to_cv2(insight_result["image_annotee_base64"])
         img2 = image_base64_to_cv2(mediapipe_result["image_mediapipe_base64"])
-        fused_img = concat_images_side_by_side(img1, img2)
+        img3 = image_base64_to_cv2(dlib_result["image_dlib_base64"])
+        fused_img = concat_images_side_by_side(concat_images_side_by_side(img1, img2), img3)
         fused_base64 = image_to_base64(fused_img)
 
         return JSONResponse(content={
             "image_fusion_base64": fused_base64,
             "resultat_insightface": insight_result,
-            "resultat_mediapipe": mediapipe_result
+            "resultat_mediapipe": mediapipe_result,
+            "resultat_dlib": dlib_result
         })
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
