@@ -136,6 +136,24 @@ def analyse_image_insightface(image_bytes):
     for pt in pts:
         cv2.circle(image, (int(pt[0]), int(pt[1])), 2, (0, 255, 0), -1)
 
+    # Connexions visuelles entre points clés (façon Dlib 68)
+    connections = [
+        list(range(0, 17)),        # mâchoire
+        list(range(17, 22)),       # sourcil gauche
+        list(range(22, 27)),       # sourcil droit
+        list(range(27, 31)),       # arrête du nez
+        list(range(31, 36)),       # base du nez
+        list(range(36, 42)),       # œil gauche
+        list(range(42, 48)),       # œil droit
+        list(range(48, 60)),       # bouche externe
+        list(range(60, 68)),       # bouche interne
+    ]
+    for group in connections:
+        for i in range(len(group) - 1):
+            pt1 = tuple(map(int, pts[group[i]]))
+            pt2 = tuple(map(int, pts[group[i + 1]]))
+            cv2.line(image, pt1, pt2, (0, 255, 255), 1)
+
     return {
         "mesures_biometriques": mesures,
         "analyses_secondaires": {
