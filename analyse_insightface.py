@@ -58,7 +58,6 @@ def detect_modifications(nose_ratio, mouth_ratio, cheek_ratio):
         anomalies.append("pommettes artificiellement saillantes")
     return anomalies
 
-# Charger InsightFace (1 seule fois au démarrage)
 app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
 app.prepare(ctx_id=0, det_size=(640, 640))
 
@@ -66,7 +65,6 @@ def analyse_image_insightface(image_bytes):
     file_bytes = np.asarray(bytearray(image_bytes), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    h, w = image.shape[:2]
 
     faces = app.get(image_rgb)
 
@@ -76,7 +74,6 @@ def analyse_image_insightface(image_bytes):
     face = faces[0]
     pts = face.landmark_3d_68.tolist()
 
-    # Landmarks clés
     leye, reye = pts[36], pts[45]
     nose = pts[30]
     chin = pts[8]
@@ -84,8 +81,8 @@ def analyse_image_insightface(image_bytes):
     top_lip, bottom_lip = pts[51], pts[57]
     left_brow, right_brow = pts[17], pts[26]
     left_cheek, right_cheek = pts[1], pts[15]
-    top_head = pts[27]  # approximation
-    mid_forehead = pts[24]  # entre sourcils
+    top_head = pts[27]
+    mid_forehead = pts[24]
 
     face_width = euclidean(pts[0], pts[16])
     face_height = euclidean(pts[8], pts[27])
@@ -123,7 +120,6 @@ def analyse_image_insightface(image_bytes):
         "profondeur_joue_droite": round(rel_dist(pts[12], right_cheek, face_width), 3),
     }
 
-    # Mesures pour analyse secondaire
     eye_opening_avg = round((rel_dist(pts[38], pts[40], face_height) + rel_dist(pts[44], pts[46], face_height)) / 2, 3)
     brow_dist_avg = round((rel_dist(pts[17], pts[38], face_height) + rel_dist(pts[26], pts[44], face_height)) / 2, 3)
     mouth_angle = angle(mouth_left, bottom_lip, mouth_right)
@@ -136,22 +132,21 @@ def analyse_image_insightface(image_bytes):
     for pt in pts:
         cv2.circle(image, (int(pt[0]), int(pt[1])), 2, (0, 255, 0), -1)
 
-    # Connexions visuelles entre points clés (façon Dlib 68)
     connections = [
-        list(range(0, 17)),        # mâchoire
-        list(range(17, 22)),       # sourcil gauche
-        list(range(22, 27)),       # sourcil droit
-        list(range(27, 31)),       # arrête du nez
-        list(range(31, 36)),       # base du nez
-        list(range(36, 42)),       # œil gauche
-        list(range(42, 48)),       # œil droit
-        list(range(48, 60)),       # bouche externe
-        list(range(60, 68)),       # bouche interne
+        list(range(0, 17)),
+        list(range(17, 22)),
+        list(range(22, 27)),
+        list(range(27, 31)),
+        list(range(31, 36)),
+        list(range(36, 42)),
+        list(range(42, 48)),
+        list(range(48, 60)),
+        list(range(60, 68)),
     ]
     for group in connections:
         for i in range(len(group) - 1):
-            pt1 = tuple(map(int, pts[group[i]]))
-            pt2 = tuple(map(int, pts[group[i + 1]]))
+            pt1 = tuple(map(int, pts[group[i]][:2]))
+            pt2 = tuple(map(int, pts[group[i + 1]][:2]))
             cv2.line(image, pt1, pt2, (0, 255, 255), 1)
 
     return {
