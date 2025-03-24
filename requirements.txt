@@ -9,3 +9,4 @@ Pillow
 onnxruntime
 python-multipart
 mediapipe
+dlib
